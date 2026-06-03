@@ -41,7 +41,8 @@ inline bool safeLocaltime(const std::time_t* time, std::tm* out) {
 // On Windows, _dupenv_s allocates a caller-owned buffer (safer).
 // ---------------------------------------------------------------------------
 inline std::string safeGetenv(const char* key) {
-#if defined(_WIN32)
+#if defined(_MSC_VER)
+    // MSVC: _dupenv_s allocates caller-owned buffer (thread-safe)
     char* buf = nullptr;
     std::size_t len = 0;
     if (::_dupenv_s(&buf, &len, key) == 0 && buf != nullptr) {
@@ -51,6 +52,7 @@ inline std::string safeGetenv(const char* key) {
     }
     return {};
 #else
+    // MinGW / GCC / Clang: plain getenv (no setenv in our code, so it's safe)
     const char* val = ::getenv(key);
     return val ? std::string(val) : std::string();
 #endif

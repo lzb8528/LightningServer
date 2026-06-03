@@ -57,6 +57,7 @@ if(NOT _found_spdlog AND EXISTS "${DEPS_DIR}/spdlog/include/spdlog/spdlog.h")
     message(STATUS "spdlog: found in deps/")
     add_library(spdlog_local INTERFACE)
     target_include_directories(spdlog_local INTERFACE "${DEPS_DIR}/spdlog/include")
+    target_compile_definitions(spdlog_local INTERFACE SPDLOG_HEADER_ONLY)
     add_library(spdlog::spdlog ALIAS spdlog_local)
     set(_found_spdlog TRUE)
 endif()
@@ -66,6 +67,7 @@ if(NOT _found_spdlog AND SPDLOG_DIR AND EXISTS "${SPDLOG_DIR}/include/spdlog/spd
     message(STATUS "spdlog: found at ${SPDLOG_DIR}")
     add_library(spdlog_local INTERFACE)
     target_include_directories(spdlog_local INTERFACE "${SPDLOG_DIR}/include")
+    target_compile_definitions(spdlog_local INTERFACE SPDLOG_HEADER_ONLY)
     add_library(spdlog::spdlog ALIAS spdlog_local)
     set(_found_spdlog TRUE)
 endif()
@@ -302,6 +304,15 @@ set(BACKEND_SOURCES
 # ============================================================================
 add_executable(lightning_server ${BACKEND_SOURCES})
 
+# Ensure local deps/ headers take priority over system/vcpkg installations
+target_include_directories(lightning_server BEFORE PRIVATE
+    ${DEPS_DIR}/spdlog/include
+    ${DEPS_DIR}/json/include
+    ${DEPS_DIR}/asio/asio/include
+)
+# Force spdlog header-only mode (uses bundled fmt, avoids linking external fmt library)
+target_compile_definitions(lightning_server PRIVATE SPDLOG_HEADER_ONLY)
+
 target_include_directories(lightning_server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
@@ -317,7 +328,7 @@ target_link_libraries(lightning_server PRIVATE
 # MySQL / hiredis
 # ============================================================================
 if(MYSQL_LIBRARY AND MYSQL_INCLUDE_DIR)
-    target_include_directories(lightning_server PRIVATE ${MYSQL_INCLUDE_DIR})
+    target_include_directories(lightning_server SYSTEM PRIVATE ${MYSQL_INCLUDE_DIR})
     target_link_libraries(lightning_server PRIVATE ${MYSQL_LIBRARY})
     target_compile_definitions(lightning_server PRIVATE HAS_MYSQL=1)
     message(STATUS "MySQL:  ${MYSQL_LIBRARY}")
@@ -327,7 +338,7 @@ else()
 endif()
 
 if(HIREDIS_LIBRARY AND HIREDIS_INCLUDE_DIR)
-    target_include_directories(lightning_server PRIVATE ${HIREDIS_INCLUDE_DIR})
+    target_include_directories(lightning_server SYSTEM PRIVATE ${HIREDIS_INCLUDE_DIR})
     target_link_libraries(lightning_server PRIVATE ${HIREDIS_LIBRARY})
     target_compile_definitions(lightning_server PRIVATE HAS_REDIS=1)
     message(STATUS "Redis:  ${HIREDIS_LIBRARY}")
