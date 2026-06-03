@@ -39,9 +39,11 @@ endif()
 # ============================================================================
 
 set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps" CACHE PATH "Directory for pre-downloaded headers")
-set(FETCH_DEPS OFF CACHE BOOL "Try to download missing deps via FetchContent (needs GitHub access)")
 
-option(FETCH_DEPS "Download missing dependencies from GitHub" OFF)
+option(FETCH_DEPS  "Download missing dependencies from GitHub" OFF)
+option(FORCE_MOCK "Force mock DB/cache mode even if MySQL/hiredis are found" OFF)
+option(USE_MYSQL  "Link real MySQL client library" OFF)
+option(USE_REDIS  "Link real hiredis library"      OFF)
 
 set(SPDLOG_DIR "" CACHE PATH "spdlog include prefix")
 set(JSON_DIR   "" CACHE PATH "nlohmann/json include prefix")
@@ -327,24 +329,32 @@ target_link_libraries(lightning_server PRIVATE
 # ============================================================================
 # MySQL / hiredis
 # ============================================================================
-if(MYSQL_LIBRARY AND MYSQL_INCLUDE_DIR)
+if(USE_MYSQL AND NOT FORCE_MOCK AND MYSQL_LIBRARY AND MYSQL_INCLUDE_DIR)
     target_include_directories(lightning_server SYSTEM PRIVATE ${MYSQL_INCLUDE_DIR})
     target_link_libraries(lightning_server PRIVATE ${MYSQL_LIBRARY})
     target_compile_definitions(lightning_server PRIVATE HAS_MYSQL=1)
     message(STATUS "MySQL:  ${MYSQL_LIBRARY}")
 else()
     target_compile_definitions(lightning_server PRIVATE MOCK_DB=1)
-    message(STATUS "MySQL:  mock mode (no MySQL found)")
+    if(FORCE_MOCK)
+        message(STATUS "MySQL:  mock mode (forced)")
+    else()
+        message(STATUS "MySQL:  mock mode (not found)")
+    endif()
 endif()
 
-if(HIREDIS_LIBRARY AND HIREDIS_INCLUDE_DIR)
+if(USE_REDIS AND NOT FORCE_MOCK AND HIREDIS_LIBRARY AND HIREDIS_INCLUDE_DIR)
     target_include_directories(lightning_server SYSTEM PRIVATE ${HIREDIS_INCLUDE_DIR})
     target_link_libraries(lightning_server PRIVATE ${HIREDIS_LIBRARY})
     target_compile_definitions(lightning_server PRIVATE HAS_REDIS=1)
     message(STATUS "Redis:  ${HIREDIS_LIBRARY}")
 else()
     target_compile_definitions(lightning_server PRIVATE MOCK_CACHE=1)
-    message(STATUS "Redis:  mock mode (no hiredis found)")
+    if(FORCE_MOCK)
+        message(STATUS "Redis:  mock mode (forced)")
+    else()
+        message(STATUS "Redis:  mock mode (not found)")
+    endif()
 endif()
 
 # ============================================================================
