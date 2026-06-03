@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(LightningServer VERSION 1.0.0 LANGUAGES CXX)
 
+# Suppress FindBoost deprecation warning (CMake >= 4.0)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
+
 # ============================================================================
 # C++ standard
 # ============================================================================

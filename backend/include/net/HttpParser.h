@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 namespace lightning {
+class Buffer;  // forward declaration — defined in net/Buffer.h
 
 struct HttpRequest {
     std::string method;

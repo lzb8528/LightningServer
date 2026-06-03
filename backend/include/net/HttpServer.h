@@ -30,7 +30,6 @@ private:
     void startAccept();
 
     net::io_context ioc_;
-    std::unique_ptr<net::executor_work_guard<net::io_context::executor_type>> workGuard_;
     net::tcp::acceptor acceptor_;
     std::vector<std::thread> threads_;
     int threadNum_;

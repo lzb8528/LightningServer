@@ -7,10 +7,6 @@
 
 namespace lightning {
 
-static bool startsWith(const std::string& s, const char* prefix) {
-    return s.compare(0, strlen(prefix), prefix) == 0;
-}
-
 static std::string trim(const std::string& s) {
     auto start = s.find_first_not_of(" \t\r\n");
     if (start == std::string::npos) return "";
@@ -58,7 +54,6 @@ bool HttpParser::parseHeaders(const char* begin, const char* end, HttpRequest* r
 }
 
 bool HttpParser::parse(Buffer* buf, HttpRequest* req) {
-    const char* crlf = "\r\n";
     const char* dblcrlf = "\r\n\r\n";
 
     const char* data = buf->peek();

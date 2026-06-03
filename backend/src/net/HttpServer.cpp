@@ -5,9 +5,7 @@
 namespace lightning {
 
 HttpServer::HttpServer(const std::string& host, uint16_t port, int threadNum)
-    : workGuard_(std::make_unique<net::executor_work_guard<net::io_context::executor_type>>(
-          net::make_work_guard(ioc_))),
-      acceptor_(ioc_),
+    : acceptor_(ioc_),
       threadNum_(threadNum) {
     net::error_code ec;
     net::tcp::endpoint endpoint(
@@ -58,8 +56,6 @@ void HttpServer::stop() {
 
     net::error_code ec;
     acceptor_.close(ec);
-
-    workGuard_.reset();
     ioc_.stop();
 
     for (auto& t : threads_) {
