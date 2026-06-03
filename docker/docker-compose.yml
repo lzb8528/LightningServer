@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lightning-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: lightning_db
+      MYSQL_USER: lightning
+      MYSQL_PASSWORD: lightning123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: lightning-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    container_name: lightning-backend
+    ports:
+      - "8080:8080"
+    environment:
+      LS_HOST: 0.0.0.0
+      LS_PORT: 8080
+      LS_THREAD_NUM: 4
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: lightning
+      MYSQL_PASSWORD: lightning123
+      MYSQL_DATABASE: lightning_db
+      MYSQL_POOL_SIZE: 8
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_POOL_SIZE: 4
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile
+    container_name: lightning-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

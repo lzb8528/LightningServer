@@ -1,0 +1,31 @@
+# LightningServer
+
+# Dependencies
+/node_modules
+/backend/build
+/backend/build_test
+/frontend/dist
+
+# IDE
+.vs/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# CMake
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
